@@ -1,1 +1,1 @@
-infer-web — Infer personal AI web client (GitHub Pages)
+infer-web — Infer personal AI web client: chat (keyless Pollinations LLM) + WeatherFusion-style multi-model weather fusion (Open-Meteo best_match/GFS/ICON + confidence badge) + NWS alerts. GitHub Pages.
