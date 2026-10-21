@@ -5,189 +5,195 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0e14">
 <title>Infer — Hardik's personal AI</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/deep-chat@2.5.1/dist/deepChat.bundle.min.js"></script>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0b0e14;color:#e6e9ef;margin:0;height:100dvh;display:flex;flex-direction:column}
-header{padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1c2230;flex-shrink:0}
-header h1{font-size:1.05rem;margin:0;font-weight:600}
-.dot{width:9px;height:9px;border-radius:50%;background:#555;margin-left:auto;transition:background .3s}
-.dot.ok{background:#22c55e}.dot.err{background:#ef4444}.dot.busy{background:#eab308;animation:pulse 1s infinite}
-@keyframes pulse{50%{opacity:.4}}
-#chat{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:85%;padding:10px 14px;border-radius:16px;line-height:1.45;font-size:.95rem;white-space:pre-wrap;word-break:break-word}
-.msg.user{align-self:flex-end;background:#2563eb;color:#fff;border-bottom-right-radius:4px}
-.msg.bot{align-self:flex-start;background:#171c26;border:1px solid #232a3a;border-bottom-left-radius:4px}
-.msg.bot.card{padding:0;overflow:hidden;min-width:85%}
-.card-h{padding:10px 14px;font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px;border-bottom:1px solid #232a3a}
-.conf{margin-left:auto;font-size:.72rem;padding:2px 8px;border-radius:999px;font-weight:700}
-.conf.high{background:#16a34a33;color:#4ade80}.conf.med{background:#d9770633;color:#fbbf24}.conf.low{background:#dc262633;color:#f87171}
-.card-b{padding:12px 14px}
-.temp{font-size:2.6rem;font-weight:700;line-height:1}
-.temp small{font-size:1.2rem;color:#9aa4b8;font-weight:400}
-.meta{color:#9aa4b8;font-size:.85rem;margin-top:6px}
-.spread{margin-top:10px;border-top:1px solid #232a3a;padding-top:10px}
-.spread-title{font-size:.75rem;color:#9aa4b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.prow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:3px 0}
-.pbar{flex:1;height:6px;background:#1c2230;border-radius:3px;overflow:hidden}
-.pbar i{display:block;height:100%;background:#3b82f6;border-radius:3px}
-.days{display:flex;gap:6px;margin-top:10px;overflow-x:auto;border-top:1px solid #232a3a;padding-top:10px}
-.day{min-width:52px;text-align:center;font-size:.78rem;color:#9aa4b8}
-.day b{display:block;color:#e6e9ef;font-size:.95rem}
-.day .d-ico{font-size:1.3rem}
-.alert{padding:10px 14px;border-radius:12px;margin-bottom:6px;font-size:.85rem;line-height:1.4}
-.alert b{display:block;margin-bottom:2px}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0b0e14;color:#e6e9ef;height:100dvh;display:flex;flex-direction:column}
+header{padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1c2230;flex-shrink:0;background:#0d111a}
+header h1{font-size:1.05rem;margin:0;font-weight:600;letter-spacing:.02em}
+header .badge{margin-left:auto;font-size:.65rem;color:#9aa4b8;border:1px solid #2b3345;padding:2px 8px;border-radius:999px}
+deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;--deep-chat-background-color:#0b0e14;
+  border:none;box-sizing:border-box}
+#alerts{max-width:760px;margin:0 auto;width:100%;padding:0 12px}
+.alert{padding:9px 12px;border-radius:12px;margin:4px 0;font-size:.82rem;line-height:1.35}
+.alert b{display:block;margin-bottom:1px}
 .sev-extreme{background:#dc262622;border:1px solid #dc262655;color:#fca5a5}
 .sev-severe{background:#ea580c22;border:1px solid #ea580c55;color:#fdba74}
 .sev-moderate{background:#ca8a0422;border:1px solid #ca8a0466;color:#fde047}
 .sev-minor{background:#2563eb22;border:1px solid #2563eb55;color:#93c5fd}
-.loc-strip{display:flex;align-items:center;gap:6px;padding:8px 14px;color:#9aa4b8;font-size:.8rem;border-bottom:1px solid #232a3a}
-.loc-strip button{margin-left:auto;background:none;border:1px solid #2b3345;color:#9aa4b8;border-radius:8px;padding:4px 10px;font-size:.78rem}
-#bar{padding:10px 12px;display:flex;gap:8px;border-top:1px solid #1c2230;padding-bottom:max(10px,env(safe-area-inset-bottom))}
-#q{flex:1;background:#12161f;border:1px solid #232a3a;color:#e6e9ef;border-radius:12px;padding:12px 14px;font-size:1rem;outline:none}
-#q:focus{border-color:#3b82f6}
-#send{background:#2563eb;color:#fff;border:none;border-radius:12px;padding:0 18px;font-size:1rem;font-weight:600}
-#send:disabled{opacity:.5}
-.typing{color:#9aa4b8;font-style:italic;font-size:.85rem}
-.err{color:#f87171;font-size:.85rem}
-button.retry{background:#1c2230;border:1px solid #2b3345;color:#93c5fd;border-radius:10px;padding:6px 14px;font-size:.85rem;margin-top:6px}
-footer{padding:6px 16px;font-size:.7rem;color:#4b5563;text-align:center;border-top:1px solid #1c2230}
-footer a{color:#6b7280}
 </style>
 </head>
 <body>
-<header>
-  <span>⚡</span><h1>Infer</h1>
-  <span id="dot" class="dot"></span>
-</header>
-<div id="chat"></div>
-<div id="bar">
-  <input id="q" placeholder="Ask Infer… try 'weather in Delhi'" autocomplete="off" enterkeyhint="send">
-  <button id="send">↑</button>
-</div>
-<footer>Infer v0.1 · keyless · runs on GitHub Pages · <a href="https://github.com/otakudev1/infer-web">source</a></footer>
+<header><span>⚡</span><h1>Infer</h1><span class="badge">v0.2 · keyless</span></header>
+<div id="alerts"></div>
+<deep-chat id="chat"
+  demo='{introMessage:{text:"Hi! I am <b>Infer</b> ⚡ — your personal AI.<br><br>Try <b>weather in Delhi</b> or <b>weather in New York</b>, or just chat with me."}}'
+  connect='{"handler":true}'
+  chatStyle='{"borderRadius":"0px","border":"none","fontSize":"15px"}'
+  messageStyles='{
+    "default":{"shared":{"bubble":{"maxWidth":"88%","lineHeight":"1.5","borderRadius":"16px","boxShadow":"none"}}},
+    "user":{"bubble":{"backgroundColor":"#2563eb","color":"#ffffff","borderRadius":"16px 16px 4px 16px"}},
+    "ai":{"bubble":{"backgroundColor":"#171c26","color":"#e6e9ef","border":"1px solid #232a3a","borderRadius":"16px 16px 16px 4px"}}
+  }'
+  submitButtonStyles='{
+    "submit":{"container":{"default":{"bottom":"0.7rem","right":"0.7rem","borderRadius":"12px","backgroundColor":"#2563eb"},"hover":{"backgroundColor":"#3b82f6"},"loading":{"backgroundColor":"#2563eb"},"stop":{"backgroundColor":"#ef4444"}},"text":{"styles":{"submit":{"fontSize":"16px"}}}}
+  }'
+  textInput='{
+    "styles":{"container":{"borderRadius":"16px","border":"1px solid #232a3a","boxShadow":"none","backgroundColor":"#12161f","color":"#e6e9ef","padding":"10px 14px"},"text":{"placeholder":{"text":"Ask Infer… try weather in Delhi","style":{"color":"#6b7280"}}}},
+    "placeholder":{"text":"Ask Infer… try weather in Delhi"}
+  }'
+  avatars='{"default":{"styles":{"avatar":{"size":"28px"}}3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ctext y=%2219%22 font-size=%2219%22%3E⚡%3C/text%3E%3C/svg%3E"}}'
+></deep-chat>
+
 <script>
 "use strict";
-const chat=document.getElementById("chat"),q=document.getElementById("q"),send=document.getElementById("send"),dot=document.getElementById("dot");
-const WMO={0:["Clear sky","☀️"],1:["Mainly clear","🌤️"],2:["Partly cloudy","⛅"],3:["Overcast","☁️"],45:["Fog","🌫️"],48:["Rime fog","🌫️"],51:["Light drizzle","🌦️"],53:["Drizzle","🌦️"],55:["Dense drizzle","🌧️"],56:["Freezing drizzle","🌧️"],57:["Freezing drizzle","🌧️"],61:["Light rain","🌦️"],63:["Rain","🌧️"],65:["Heavy rain","🌧️"],66:["Freezing rain","🌧️"],67:["Freezing rain","🌧️"],71:["Light snow","🌨️"],73:["Snow","❄️"],75:["Heavy snow","❄️"],77:["Snow grains","🌨️"],80:["Light showers","🌦️"],81:["Showers","🌧️"],82:["Violent showers","⛈️"],85:["Snow showers","🌨️"],86:["Snow showers","🌨️"],95:["Thunderstorm","⛈️"],96:["Thunderstorm + hail","⛈️"],99:["Severe thunderstorm","⛈️"]};
-const wmo=c=>WMO[c]||["—","❓"];
+const WMO={0:["Clear sky","☀️"],1:["Mostly clear","🌤️"],2:["Partly cloudy","⛅"],3:["Overcast","☁️"],45:["Fog","🌫️"],48:["Rime fog","🌫️"],51:["Light drizzle","🌦️"],53:["Drizzle","🌦️"],55:["Dense drizzle","🌧️"],56:["Freezing drizzle","🌧️"],57:["Freezing drizzle","🌧️"],61:["Light rain","🌦️"],63:["Rain","🌧️"],65:["Heavy rain","🌧️"],66:["Freezing rain","🌧️"],67:["Freezing rain","🌧️"],71:["Light snow","🌨️"],73:["Snow","❄️"],75:["Heavy snow","❄️"],77:["Snow grains","🌨️"],80:["Light showers","🌦️"],81:["Showers","🌧️"],82:["Violent showers","⛈️"],85:["Snow showers","🌨️"],86:["Snow showers","🌨️"],95:["Thunderstorm","⛈️"],96:["Thunderstorm + hail","⛈️"],99:["Severe thunderstorm","⛈️"]};
+const wmo=c=>WMO[c]||["Unknown","❓"];
 const esc=s=>{const d=document.createElement("div");d.textContent=s??"";return d.innerHTML};
-function setDot(s){dot.className="dot"+(s?" "+s:"")}
-function addMsg(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
-let history=[];try{history=JSON.parse(localStorage.getItem("infer_hist")||"[]")}catch(e){history=[]}
-history.forEach(m=>addMsg(m.r==="u"?"user":"bot",m.h));
 
-// ---------- Weather fusion (keyless Open-Meteo) ----------
-async function geocode(qs){
-  const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(qs)+"&count=1&language=en&format=json");
-  if(!r.ok)throw new Error("geocode HTTP "+r.status);
-  const j=await r.json();
-  const x=(j.results||[])[0];if(!x)throw new Error("Place not found: "+qs);
+// ---------- LLM: robust path with fallbacks (kills the https errors) ----------
+async function callLLM(prompt){
+  const body=JSON.stringify({model:"openai",messages:[{role:"user",content:prompt}]});
+  // 1) POST /open (best endpoint, CORS verified)
+  try{
+    const r=await fetch("https://text.pollinations.ai/openai",{method:"POST",headers:{"Content-Type":"application/json"},body});
+    if(r.ok){const j=await r.json();const t=j?.choices?.[0]?.message?.content;if(t)return t}
+    if(r.status!==402&&r.status!==429)throw new Error("POST /openai HTTP "+r.status);
+  }catch(e){/* fall through */}
+  // 2) GET short fallback
+  try{
+    const r=await fetch("https://text.pollinations.ai/"+encodeURIComponent(prompt.slice(0,400)));
+    if(r.ok)return await r.text();
+  }catch(e){/* fall through */}
+  // 3) graceful degradation — never leave the user with a dead bubble
+  return "";
+}
+
+// ---------- Weather: geocode + per-model fusion + alerts ----------
+async function geocode(q){
+  const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(q)+"&count=1&language=en&format=json");
+  if(!r.ok)throw new Error("Geocoding service error ("+r.status+")");
+  const j=await r.json();const x=(j.results||[])[0];
+  if(!x)throw new Error("Place not found: "+q);
   return x;
 }
+async function modelTemp(lat,lon,m){
+  try{
+    const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&current=temperature_2m&models="+m+"&timezone=auto");
+    if(!r.ok)return null;
+    const j=await r.json();return j?.current?.temperature_2m??null;
+  }catch(e){return null}
+}
 async function forecast(lat,lon){
-  const OM="https://api.open-meteo.com/v1/forecast";
-  // Per-model CURRENT requires separate calls: in multi-model responses Open-Meteo
-  // suffixes daily arrays but returns a single (best_match) current block.
-  const one=m=>fetch(OM+"?latitude="+lat+"&longitude="+lon+"&current=temperature_2m&models="+m+"&timezone=auto")
-    .then(r=>{if(!r.ok)throw new Error("model "+m+" HTTP "+r.status);return r.json()})
-    .then(j=>j.current?.temperature_2m??null);
-  const main=fetch(OM+"?latitude="+lat+"&longitude="+lon+
+  const u="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
     "&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature"+
     "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"+
-    "&forecast_days=5&timezone=auto").then(r=>{if(!r.ok)throw new Error("forecast HTTP "+r.status);return r.json()});
-  const[mb,mg,mi,M]=await Promise.all([one("best_match"),one("gfs_seamless"),one("icon_seamless"),main]);
-  return {main:M,models:{best_match:mb,gfs_seamless:mg,icon_seamless:mi}};
-}
-function fusionCard(place,j){
-  const c=j.main.current||{},d0=j.main.daily||{};
-  const models=Object.entries(j.models).filter(([k,v])=>v!=null).map(([id,temp])=>({id,temp}));
-  const temps=models.map(m=>m.temp);
-  const spread=temps.length>1?Math.max(...temps)-Math.min(...temps):0;
-  const conf=Math.max(0,Math.min(100,Math.round(100-spread*10)));
-  const cls=conf>=80?"high":conf>=60?"med":"low";const lbl=conf>=80?"HIGH":conf>=60?"MEDIUM":"LOW";
-  const [txt,ico]=wmo(c.weather_code);
-  let days="";
-  const d=d0;
-  const baseDaily=(d.time||[]).map((t,i)=>({t,code:(d.weather_code||[])[i],max:(d.temperature_2m_max||[])[i],min:(d.temperature_2m_min||[])[i]}));
-  if(baseDaily.length){days='<div class="days">'+baseDaily.slice(0,5).map(x=>{
-    const[_,di]=wmo(x.code);const nm=new Date(x.t).toLocaleDateString(undefined,{weekday:"short"});
-    return '<div class="day"><span class="d-ico">'+di+'</span><b>'+Math.round(x.max)+"°/"+Math.round(x.min)+"°</b>"+nm+"</div>"}).join("")+"</div>"}
-  let provRows=models.map(m=>{
-    const lbl2=m.id==="best_match"?"Best match":m.id.includes("gfs")?"GFS":m.id.includes("icon")?"ICON":m.id;
-    const vals=temps.length>1?temps:[m.temp||0];const mn=Math.min(...vals),mx=Math.max(...vals);
-    const pct=mx===mn?100:((m.temp-mn)/(mx-mn))*100;
-    return '<div class="prow"><span style="width:72px">'+lbl2+'</span><span class="pbar"><i style="width:'+(pct||50)+'%"></i></span><b>'+Math.round(m.temp)+"°</b></div>"}).join("");
-  const spreadLine=temps.length>1?'<div class="meta">Spread: '+spread.toFixed(1)+"°C across "+temps.length+' models</div>':"";
-
-  return `<div class="card-h">${ico} ${esc(place.name)}<span class="conf ${cls}">${lbl} ${conf}</span></div>
-  <div class="card-b"><div class="temp">${Math.round(c.temperature_2m)}<small>°C</small></div>
-  <div class="meta">${txt} · feels ${Math.round(c.apparent_temperature??c.temperature_2m)}° · wind ${Math.round(c.wind_speed_10m)} km/h · hum ${c.relative_humidity_2m??"—"}%</div>
-  ${spreadLine}<div class="spread"><div class="spread-title">Provider spread</div>${provRows}</div>${days}</div>`;
+    "&forecast_days=5&timezone=auto";
+  const r=await fetch(u);
+  if(!r.ok)throw new Error("Weather service error ("+r.status+")");
+  return r.json();
 }
 async function alertsFor(place){
   try{
-    if(place.country_code!=="US")return "";
+    if((place.country_code||"").toUpperCase()!=="US")return [];
     const r=await fetch("https://api.weather.gov/alerts/active?point="+place.latitude+","+place.longitude,{headers:{Accept:"application/geo+json"}});
-    if(!r.ok)return "";
-    const j=await r.json();const fs=(j.features||[]).slice(0,3);
-    if(!fs.length)return "";
-    return fs.map(f=>{const p=f.properties||{};const sev=(p.severity||"").toLowerCase();
-      const cls=sev==="extreme"?"sev-extreme":sev==="severe"?"sev-severe":sev==="moderate"?"sev-moderate":"sev-minor";
-      return `<div class="alert ${cls}"><b>⚠️ ${esc(p.event||"Alert")}</b>${esc(p.headline||p.areaDesc||"")}</div>`}).join("");
-  }catch(e){return ""}
+    if(!r.ok)return [];
+    const j=await r.json();return (j.features||[]).slice(0,3).map(f=>f.properties||{});
+  }catch(e){return []}
 }
-async function llm(prompt){
-  const r=await fetch("https://text.pollinations.ai/"+encodeURIComponent(prompt));
-  if(!r.ok)throw new Error("LLM HTTP "+r.status);
-  return r.text();
+function fusionCard(place,j,models){
+  const temps=models.map(m=>m.temp).filter(t=>t!=null);
+  const spread=temps.length>1?Math.max(...temps)-Math.min(...temps):0;
+  const conf=Math.max(0,Math.min(100,Math.round(100-spread*10)));
+  const cls=conf>=80?"high":conf>=60?"med":"low";
+  const lbl=conf>=80?"HIGH":conf>=60?"MEDIUM":"LOW";
+  const c=j.current||{};
+  const [txt,ico]=wmo(c.weather_code);
+  const d=j.daily||{};
+  const days=(d.time||[]).slice(0,5).map((t,i)=>{
+    const [,di]=wmo((d.weather_code||[])[i]);
+    const mx=Math.round((d.temperature_2m_max||[])[i]),mn=Math.round((d.temperature_2m_min||[])[i]);
+    const nm=new Date(t+"T12:00:00").toLocaleDateString(undefined,{weekday:"short"});
+    return "<div style='flex:1;text-align:center;font-size:.72rem;color:#9aa4b8'><div style='font-size:1.1rem'>"+di+"</div><b style='color:#e6e9ef;font-size:.82rem'>"+mx+"°/"+mn+"°</b><br>"+nm+"</div>";
+  }).join("");
+  const names={best_match:"Best match",gfs_seamless:"GFS",icon_seamless:"ICON"};
+  const rows=models.map(m=>{
+    const mn=Math.min(...temps),mx=Math.max(...temps);
+    const pct=mx>mn?((m.temp-mn)/(mx-mn))*100:100;
+    return "<div style='display:flex;align-items:center;gap:8px;font-size:.8rem;margin:3px 0'><span style='width:70px;color:#9aa4b8'>"+(names[m.id]||m.id)+"</span><span style='flex:1;height:6px;background:#1c2230;border-radius:3px;overflow:hidden'><i style='display:block;height:100%;width:"+(pct||50)+"%;background:#3b82f6'></i></span><b>"+(m.temp!=null?Math.round(m.temp)+"°":"—")+"</b></div>";
+  }).join("");
+  return "<div style='font-weight:600;font-size:.95rem;margin-bottom:6px'>"+ico+" <b>"+esc(place.name)+"</b> <span style='float:right;font-size:.68rem;padding:2px 8px;border-radius:999px;font-weight:700;background:"+confBg(cls)+";color:"+confColor(cls)+"'>"+lbl+" "+conf+"</span></div>"+
+    "<div style='font-size:2.2rem;font-weight:700;line-height:1'>"+Math.round(c.temperature_2m)+"<span style='font-size:1rem;color:#9aa4b8'>°C</span></div>"+
+    "<div style='color:#9aa4b8;font-size:.8rem;margin:4px 0'>"+txt+" · feels "+Math.round(c.apparent_temperature??c.temperature_2m)+"° · wind "+Math.round(c.wind_speed_10m)+" km/h</div>"+
+    (temps.length>1?"<div style='color:#9aa4b8;font-size:.75rem'>Spread "+spread.toFixed(1)+"°C across "+temps.length+" models</div>":"")+
+    "<div style='margin:8px 0 2px;font-size:.68rem;color:#9aa4b8;text-transform:uppercase;letter-spacing:.05em'>Provider spread</div>"+rows+
+    "<div style='display:flex;gap:4px;margin-top:8px;border-top:1px solid #232a3a;padding-top:8px'>"+days+"</div>";
 }
+const confBg=c=>c==="high"?"#16a34a33":c==="med"?"#d9770633":"#dc262633";
+const confColor=c=>c==="high"?"#4ade80":c==="med"?"#fbbf24":"#f87171";
 
-// ---------- Chat flow ----------
-let busy=false;
-async function handle(text){
-  if(busy)return;busy=true;send.disabled=true;setDot("busy");
-  addMsg("user",esc(text));history.push({r:"u",h:esc(text)});
-  const wMatch=text.match(/weather(?:\s+in|\s+at|\s+for)?\s+(?:the\s+)?(.+?)[?.!]*$/i)||text.match(/^(.+?)\s+weather/i);
-  const wantsWeather=/weather|forecast|temperature|temp outside|alerts/i.test(text);
-  let loc=wantsWeather?(wMatch?wMatch[1].trim():""):"";
-  let place=null;
-  if(wantsWeather&&loc){try{place=await geocode(loc)}catch(e){place=null}}
-  if(wantsWeather&&!place&&text.trim().length<25){try{place=await geocode(text.trim())}catch(e){}}
-  try{
-    if(place){
-      setDot("busy");
-      const[j,al]=await Promise.all([forecast(place.latitude,place.longitude),alertsFor(place)]);
-      const card=document.createElement("div");card.className="msg bot card";
-      card.innerHTML=(al?'<div style="padding:10px 10px 0">'+al+"</div>":"")+fusionCard(place,j);
-      card.innerHTML+='<div class="loc-strip">📍 '+esc((place.admin1?place.admin1+", ":"")+(place.country||""))+" · "+esc(place.timezone||"")+'<button data-loc="'+esc(place.name)+"|"+place.latitude+"|"+place.longitude+"|"+esc(place.country_code||"")+'">Pin location</button></div>';
-      chat.appendChild(card);chat.scrollTop=chat.scrollHeight;
+// ---------- Deep Chat handler ----------
+const chat=document.getElementById("chat");
+chat.connect={handler:async(body,signals)=>{
+  const msgs=body.messages||[];
+  const last=msgs[msgs.length-1];
+  const text=(last?.text||"").trim();
+  if(!text){signals.onResponse({text:"(empty message)"});return}
+  // Weather detection
+  const m=text.match(/weather(?:\s+(?:in|at|for))?[:]?\s+(?:the\s+)?(.+?)[?.!]*$/i);
+  const wantsWeather=/\bweather\b|\bforecast\b|\btemperature\b/i.test(text);
+  let place=null,loc=m?m[1].trim():"";
+  if(wantsWeather&&loc){try{place=await geocode(loc)}catch(e){}}
+  if(wantsWeather&&!place&&text.split(/\s+/).length<=6){try{place=await geocode(text)}catch(e){}}
+  if(place){
+    try{
+      const [j,tb,tg,ti]=await Promise.all([
+        forecast(place.latitude,place.longitude),
+        modelTemp(place.latitude,place.longitude,"best_match"),
+        modelTemp(place.latitude,place.longitude,"gfs_seamless"),
+        modelTemp(place.latitude,place.longitude,"icon_seamless"),
+      ]);
+      const models=[{id:"best_match",temp:tb},{id:"gfs_seamless",temp:tg},{id:"icon_seamless",temp:ti}]
+        .filter(x=>x.temp!=null);
+      const card=fusionCard(place,j,models);
+      // alerts banner area above chat
+      const alerts=await alertsFor(place);
+      renderAlerts(alerts);
+      // one short AI comment (best-effort, silent on failure)
       let comment="";
-      try{comment=await llm("You are Infer, a concise personal AI. One short friendly sentence about this weather: "+place.name+" current "+(c.temperature_2m)+"C, "+wmo(c.weather_code)[0]+".")}catch(e){}
-      if(comment)addMsg("bot",esc(comment.trim()));
-      history.push({r:"b",h:"[weather card: "+place.name+"]"});
-      setDot("ok");
-    }else{
-      const hist=history.slice(-6).map(m=>(m.r==="u"?"User: ":"Infer: ")+m.h.replace(/<[^>]*>/g,"")).join("\n");
-      const reply=await llm("You are Infer, Hardik's concise personal AI assistant.\nConversation so far:\n"+hist+"\nUser: "+text+"\nAnswer briefly:");
-      addMsg("bot",esc(reply.trim()));history.push({r:"b",h:esc(reply.trim())});setDot("ok");
+      try{
+        const c=j.current||{};
+        comment=await callLLM("One short friendly sentence about this weather in "+place.name+": "+c.temperature_2m+"C, "+wmo(c.weather_code)[0]+". No preamble.");
+      }catch(e){}
+      signals.onResponse({text:(comment||"").trim(),html:card?("<div>"+card+"</div>"):undefined,overwrite:false});
+      if(!comment){
+        signals.onResponse({html:"<div>"+card+"</div>",overwrite:true});
+      }
+      return;
+    }catch(e){
+      signals.onResponse({error:"Weather service issue: "+e.message+". Try again in a moment."});
+      return;
     }
-  }catch(e){
-    setDot("err");
-    const m=addMsg("bot","<span class='err'>⚠️ "+esc(e.message)+"</span><br>");
-    const b=document.createElement("button");b.className="retry";b.textContent="Retry";b.onclick=()=>{m.remove();handle(text)};m.appendChild(b);
   }
-  localStorage.setItem("infer_hist",JSON.stringify(history.slice(-30)));
-  busy=false;send.disabled=false;
+  // Plain chat
+  const hist=(msgs.slice(-6).map(x=>((x.role==="user"?"User: ":"Infer: ")+(x.text||""))).join("\n"));
+  const reply=await callLLM("You are Infer, "+(window.INFER_NAME||"Hardik")+"'s concise personal AI assistant.\nRecent conversation:\n"+hist+"\nUser: "+text+"\nReply briefly:");
+  if(reply){signals.onResponse({text:reply.trim()})}
+  else{signals.onResponse({text:"I could not reach the AI service just now (it is a free tier with rate limits). Please try again in a few seconds — or ask me for weather, that works independently. 🌦️"})}
+}};
+
+function renderAlerts(props){
+  const box=document.getElementById("alerts");box.innerHTML="";
+  box.style.display=props&&props.length?"block":"none";
+  for(const p of props||[]){
+    const sev=(p.severity||"").toLowerCase();
+    const cls=sev==="extreme"?"sev-extreme":sev==="severe"?"sev-severe":sev==="moderate"?"sev-moderate":"sev-minor";
+    const d=document.createElement("div");d.className="alert "+cls;
+    d.innerHTML="<b>⚠️ "+esc(p.event||"Alert")+"</b>"+esc(p.headline||p.areaDesc||"");
+    box.appendChild(d);
+  }
 }
-function submit(){const t=q.value.trim();if(!t)return;q.value="";handle(t)}
-send.onclick=submit;
-chat.addEventListener("click",e=>{
-  const b=e.target.closest("button[data-loc]");if(!b)return;
-  localStorage.setItem("infer_pin",b.dataset.loc);
-  b.textContent="Pinned ✓";b.disabled=true;setTimeout(()=>b.textContent="Pin location",2500);
-});
-q.addEventListener("keydown",e=>{if(e.key==="Enter")submit()});
-if(!history.length){addMsg("bot","👋 Hey! I'm <b>Infer</b> — your personal AI.\n\nTry: <b>weather in Delhi</b> · <b>weather in New York</b> (with live alerts) · or just chat.\n\n100% keyless &amp; free.")}
 </script>
 </body>
 </html>
