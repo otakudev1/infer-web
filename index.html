@@ -133,7 +133,7 @@ const confColor=c=>c==="high"?"#4ade80":c==="med"?"#fbbf24":"#f87171";
 
 // ---------- Deep Chat handler ----------
 const chat=document.getElementById("chat");
-chat.connect={handler:async(body,signals)=>{
+const buildConnect=()=>({handler:async(body,signals)=>{
   const msgs=body.messages||[];
   const last=msgs[msgs.length-1];
   const text=(last?.text||"").trim();
@@ -178,7 +178,10 @@ chat.connect={handler:async(body,signals)=>{
   const reply=await callLLM("You are Infer, "+(window.INFER_NAME||"Hardik")+"'s concise personal AI assistant.\nRecent conversation:\n"+hist+"\nUser: "+text+"\nReply briefly:");
   if(reply){signals.onResponse({text:reply.trim()})}
   else{signals.onResponse({text:"I could not reach the AI service just now (it is a free tier with rate limits). Please try again in a few seconds — or ask me for weather, that works independently. 🌦️"})}
-}};
+}});
+// Register AFTER the custom element is defined, otherwise the pre-upgrade
+// property is shadowed by an own-property and Deep Chat falls back to demo mode.
+customElements.whenDefined("deep-chat").then(()=>{chat.connect=buildConnect()});
 
 function renderAlerts(props){
   const box=document.getElementById("alerts");box.innerHTML="";
