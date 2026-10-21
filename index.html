@@ -13,8 +13,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0b0e14;color:#e6
 header{padding:12px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1c2230;flex-shrink:0;background:#0d111a}
 header h1{font-size:1.05rem;margin:0;font-weight:600;letter-spacing:.02em}
 header .badge{margin-left:auto;font-size:.65rem;color:#9aa4b8;border:1px solid #2b3345;padding:2px 8px;border-radius:999px}
-deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;--deep-chat-background-color:#0b0e14;
-  border:none;box-sizing:border-box}
+deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;
+  background:#0b0e14;border:none;box-sizing:border-box;
+  --deep-chat-background-color:#0b0e14}
 #alerts{max-width:760px;margin:0 auto;width:100%;padding:0 12px}
 .alert{padding:9px 12px;border-radius:12px;margin:4px 0;font-size:.82rem;line-height:1.35}
 .alert b{display:block;margin-bottom:1px}
@@ -175,7 +176,7 @@ const buildConnect=()=>({handler:async(body,signals)=>{
 // property is shadowed by an own-property and Deep Chat falls back to demo mode.
 customElements.whenDefined("deep-chat").then(()=>{
   // Cohesive dark theme — set as properties (attribute JSON quoting is fragile)
-  chat.containerStyle = {borderRadius:"0px", border:"none", backgroundColor:"#0b0e14"};
+  chat.chatStyle = {backgroundColor:"#0b0e14", borderRadius:"0px", border:"none"};
   chat.messageStyles = {
     default: {shared: {bubble: {maxWidth:"88%", lineHeight:"1.5", borderRadius:"16px", boxShadow:"none", fontSize:"15px"}}},
     user: {bubble: {backgroundColor:"#2563eb", color:"#ffffff", borderRadius:"16px 16px 4px 16px"}},
