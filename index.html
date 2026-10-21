@@ -85,45 +85,36 @@ async function geocode(qs){
   return x;
 }
 async function forecast(lat,lon){
-  const u="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
+  const OM="https://api.open-meteo.com/v1/forecast";
+  // Per-model CURRENT requires separate calls: in multi-model responses Open-Meteo
+  // suffixes daily arrays but returns a single (best_match) current block.
+  const one=m=>fetch(OM+"?latitude="+lat+"&longitude="+lon+"&current=temperature_2m&models="+m+"&timezone=auto")
+    .then(r=>{if(!r.ok)throw new Error("model "+m+" HTTP "+r.status);return r.json()})
+    .then(j=>j.current?.temperature_2m??null);
+  const main=fetch(OM+"?latitude="+lat+"&longitude="+lon+
     "&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature"+
     "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"+
-    "&models=best_match,gfs_seamless,icon_seamless&forecast_days=5&timezone=auto";
-  const r=await fetch(u);if(!r.ok)throw new Error("forecast HTTP "+r.status);
-  return r.json();
-}
-function modelKey(base,k){return base.endsWith("_"+k)?base.slice(0,-k.length-1):base}
-function extractModels(j){
-  const cu=j.current_units||{},c=j.current||{};
-  const out={};let best=null;
-  for(const k in c){
-    const m=k.match(/^(.+)_temperature_2m$/);if(m){out[m[1]]={temp:c[k],code:c[m[1]+"_weather_code"]??null}}
-  }
-  if(Object.keys(out).length===0&&c.temperature_2m!==undefined){
-    out.best_match={temp:c.temperature_2m,code:c.weather_code};
-    const d=j.daily||{};let found=false;
-    for(const k in d){const m=k.match(/^(.+)_temperature_2m_max$/);if(m)found=true}
-    if(found){for(const mk of["gfs_seamless","icon_seamless"]){const ck=mk+"_temperature_2m";if(c[ck]!==undefined)out[mk]={temp:c[ck],code:c[mk+"_weather_code"]??null}}}
-  }
-  return out;
+    "&forecast_days=5&timezone=auto").then(r=>{if(!r.ok)throw new Error("forecast HTTP "+r.status);return r.json()});
+  const[mb,mg,mi,M]=await Promise.all([one("best_match"),one("gfs_seamless"),one("icon_seamless"),main]);
+  return {main:M,models:{best_match:mb,gfs_seamless:mg,icon_seamless:mi}};
 }
 function fusionCard(place,j){
-  const models=extractModels(j);
-  const temps=Object.values(models).map(m=>m.temp).filter(v=>v!=null);
+  const c=j.main.current||{},d0=j.main.daily||{};
+  const models=Object.entries(j.models).filter(([k,v])=>v!=null).map(([id,temp])=>({id,temp}));
+  const temps=models.map(m=>m.temp);
   const spread=temps.length>1?Math.max(...temps)-Math.min(...temps):0;
   const conf=Math.max(0,Math.min(100,Math.round(100-spread*10)));
   const cls=conf>=80?"high":conf>=60?"med":"low";const lbl=conf>=80?"HIGH":conf>=60?"MEDIUM":"LOW";
-  const c=j.current||{};
   const [txt,ico]=wmo(c.weather_code);
   let days="";
-  const d=j.daily||{};
+  const d=d0;
   const baseDaily=(d.time||[]).map((t,i)=>({t,code:(d.weather_code||[])[i],max:(d.temperature_2m_max||[])[i],min:(d.temperature_2m_min||[])[i]}));
   if(baseDaily.length){days='<div class="days">'+baseDaily.slice(0,5).map(x=>{
     const[_,di]=wmo(x.code);const nm=new Date(x.t).toLocaleDateString(undefined,{weekday:"short"});
     return '<div class="day"><span class="d-ico">'+di+'</span><b>'+Math.round(x.max)+"°/"+Math.round(x.min)+"°</b>"+nm+"</div>"}).join("")+"</div>"}
-  let provRows=Object.entries(models).map(([id,m])=>{
-    const lbl2=id==="best_match"?"Best match":id.includes("gfs")?"GFS":id.includes("icon")?"ICON":id;
-    const vals=temps.length?temps:[m.temp||0];const mn=Math.min(...vals),mx=Math.max(...vals);
+  let provRows=models.map(m=>{
+    const lbl2=m.id==="best_match"?"Best match":m.id.includes("gfs")?"GFS":m.id.includes("icon")?"ICON":m.id;
+    const vals=temps.length>1?temps:[m.temp||0];const mn=Math.min(...vals),mx=Math.max(...vals);
     const pct=mx===mn?100:((m.temp-mn)/(mx-mn))*100;
     return '<div class="prow"><span style="width:72px">'+lbl2+'</span><span class="pbar"><i style="width:'+(pct||50)+'%"></i></span><b>'+Math.round(m.temp)+"°</b></div>"}).join("");
   const spreadLine=temps.length>1?'<div class="meta">Spread: '+spread.toFixed(1)+"°C across "+temps.length+' models</div>':"";
@@ -171,7 +162,7 @@ async function handle(text){
       card.innerHTML+='<div class="loc-strip">📍 '+esc((place.admin1?place.admin1+", ":"")+(place.country||""))+" · "+esc(place.timezone||"")+'<button data-loc="'+esc(place.name)+"|"+place.latitude+"|"+place.longitude+"|"+esc(place.country_code||"")+'">Pin location</button></div>';
       chat.appendChild(card);chat.scrollTop=chat.scrollHeight;
       let comment="";
-      try{comment=await llm("You are Infer, a concise personal AI. One short friendly sentence about this weather: "+place.name+" current "+(j.current?.temperature_2m)+"C, "+wmo(j.current?.weather_code)[0]+".")}catch(e){}
+      try{comment=await llm("You are Infer, a concise personal AI. One short friendly sentence about this weather: "+place.name+" current "+(c.temperature_2m)+"C, "+wmo(c.weather_code)[0]+".")}catch(e){}
       if(comment)addMsg("bot",esc(comment.trim()));
       history.push({r:"b",h:"[weather card: "+place.name+"]"});
       setDot("ok");
@@ -190,6 +181,11 @@ async function handle(text){
 }
 function submit(){const t=q.value.trim();if(!t)return;q.value="";handle(t)}
 send.onclick=submit;
+chat.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-loc]");if(!b)return;
+  localStorage.setItem("infer_pin",b.dataset.loc);
+  b.textContent="Pinned ✓";b.disabled=true;setTimeout(()=>b.textContent="Pin location",2500);
+});
 q.addEventListener("keydown",e=>{if(e.key==="Enter")submit()});
 if(!history.length){addMsg("bot","👋 Hey! I'm <b>Infer</b> — your personal AI.\n\nTry: <b>weather in Delhi</b> · <b>weather in New York</b> (with live alerts) · or just chat.\n\n100% keyless &amp; free.")}
 </script>
