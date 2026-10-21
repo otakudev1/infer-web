@@ -28,8 +28,7 @@ deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;--deep-chat-background
 <header><span>⚡</span><h1>Infer</h1><span class="badge">v0.2 · keyless</span></header>
 <div id="alerts"></div>
 <deep-chat id="chat"
-  demo='{introMessage:{text:"Hi! I am <b>Infer</b> ⚡ — your personal AI.<br><br>Try <b>weather in Delhi</b> or <b>weather in New York</b>, or just chat with me."}}'
-  connect='{"handler":true}'
+  introMessage='{"html":"Hi! I am <b>Infer</b> ⚡ — your personal AI.<br><br>Try <b>weather in Delhi</b> or <b>weather in New York</b>, or just chat with me."}'
   chatStyle='{"borderRadius":"0px","border":"none","fontSize":"15px"}'
   messageStyles='{
     "default":{"shared":{"bubble":{"maxWidth":"88%","lineHeight":"1.5","borderRadius":"16px","boxShadow":"none"}}},
@@ -43,7 +42,6 @@ deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;--deep-chat-background
     "styles":{"container":{"borderRadius":"16px","border":"1px solid #232a3a","boxShadow":"none","backgroundColor":"#12161f","color":"#e6e9ef","padding":"10px 14px"},"text":{"placeholder":{"text":"Ask Infer… try weather in Delhi","style":{"color":"#6b7280"}}}},
     "placeholder":{"text":"Ask Infer… try weather in Delhi"}
   }'
-  avatars='{"default":{"styles":{"avatar":{"size":"28px"}}3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ctext y=%2219%22 font-size=%2219%22%3E⚡%3C/text%3E%3C/svg%3E"}}'
 ></deep-chat>
 
 <script>
@@ -166,10 +164,9 @@ chat.connect={handler:async(body,signals)=>{
         const c=j.current||{};
         comment=await callLLM("One short friendly sentence about this weather in "+place.name+": "+c.temperature_2m+"C, "+wmo(c.weather_code)[0]+". No preamble.");
       }catch(e){}
-      signals.onResponse({text:(comment||"").trim(),html:card?("<div>"+card+"</div>"):undefined,overwrite:false});
-      if(!comment){
-        signals.onResponse({html:"<div>"+card+"</div>",overwrite:true});
-      }
+      let html="<div>"+card+"</div>";
+      if(comment)html="<div style='margin-bottom:8px'>"+esc(comment.trim())+"</div>"+html;
+      signals.onResponse({html:html});
       return;
     }catch(e){
       signals.onResponse({error:"Weather service issue: "+e.message+". Try again in a moment."});
