@@ -28,20 +28,6 @@ deep-chat{flex:1;width:100%;max-width:760px;margin:0 auto;--deep-chat-background
 <header><span>⚡</span><h1>Infer</h1><span class="badge">v0.2 · keyless</span></header>
 <div id="alerts"></div>
 <deep-chat id="chat"
-  introMessage='{"html":"Hi! I am <b>Infer</b> ⚡ — your personal AI.<br><br>Try <b>weather in Delhi</b> or <b>weather in New York</b>, or just chat with me."}'
-  chatStyle='{"borderRadius":"0px","border":"none","fontSize":"15px"}'
-  messageStyles='{
-    "default":{"shared":{"bubble":{"maxWidth":"88%","lineHeight":"1.5","borderRadius":"16px","boxShadow":"none"}}},
-    "user":{"bubble":{"backgroundColor":"#2563eb","color":"#ffffff","borderRadius":"16px 16px 4px 16px"}},
-    "ai":{"bubble":{"backgroundColor":"#171c26","color":"#e6e9ef","border":"1px solid #232a3a","borderRadius":"16px 16px 16px 4px"}}
-  }'
-  submitButtonStyles='{
-    "submit":{"container":{"default":{"bottom":"0.7rem","right":"0.7rem","borderRadius":"12px","backgroundColor":"#2563eb"},"hover":{"backgroundColor":"#3b82f6"},"loading":{"backgroundColor":"#2563eb"},"stop":{"backgroundColor":"#ef4444"}},"text":{"styles":{"submit":{"fontSize":"16px"}}}}
-  }'
-  textInput='{
-    "styles":{"container":{"borderRadius":"16px","border":"1px solid #232a3a","boxShadow":"none","backgroundColor":"#12161f","color":"#e6e9ef","padding":"10px 14px"},"text":{"placeholder":{"text":"Ask Infer… try weather in Delhi","style":{"color":"#6b7280"}}}},
-    "placeholder":{"text":"Ask Infer… try weather in Delhi"}
-  }'
 ></deep-chat>
 
 <script>
@@ -187,7 +173,27 @@ const buildConnect=()=>({handler:async(body,signals)=>{
 }});
 // Register AFTER the custom element is defined, otherwise the pre-upgrade
 // property is shadowed by an own-property and Deep Chat falls back to demo mode.
-customElements.whenDefined("deep-chat").then(()=>{chat.connect=buildConnect()});
+customElements.whenDefined("deep-chat").then(()=>{
+  // Cohesive dark theme — set as properties (attribute JSON quoting is fragile)
+  chat.containerStyle = {borderRadius:"0px", border:"none", backgroundColor:"#0b0e14"};
+  chat.messageStyles = {
+    default: {shared: {bubble: {maxWidth:"88%", lineHeight:"1.5", borderRadius:"16px", boxShadow:"none", fontSize:"15px"}}},
+    user: {bubble: {backgroundColor:"#2563eb", color:"#ffffff", borderRadius:"16px 16px 4px 16px"}},
+    ai: {bubble: {backgroundColor:"#171c26", color:"#e6e9ef", border:"1px solid #232a3a", borderRadius:"16px 16px 16px 4px"}}
+  };
+  chat.textInput = {
+    styles: {container: {borderRadius:"16px", border:"1px solid #232a3a", boxShadow:"none", backgroundColor:"#12161f", color:"#e6e9ef", padding:"12px 16px"},
+             text: {placeholder: {text:"Ask Infer… try weather in Delhi", style:{color:"#6b7280"}}}},
+    placeholder: {text:"Ask Infer… try weather in Delhi"}
+  };
+  chat.submitButtonStyles = {
+    submit: {container: {default:{bottom:"0.75rem", right:"0.75rem", borderRadius:"12px", backgroundColor:"#2563eb"},
+             hover:{backgroundColor:"#3b82f6"}, loading:{backgroundColor:"#2563eb"}, stop:{backgroundColor:"#ef4444"}},
+             text: {styles: {submit:{fontSize:"16px"}}}}
+  };
+  chat.introMessage = {html:"Hi! I am <b>Infer</b> \u26A1 — your personal AI.<br><br>Try <b>weather in Delhi</b> or <b>weather in New York</b>, or just chat with me."};
+  chat.connect = buildConnect();
+});
 
 function renderAlerts(props){
   const box=document.getElementById("alerts");box.innerHTML="";
