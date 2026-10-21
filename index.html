@@ -142,8 +142,14 @@ const buildConnect=()=>({handler:async(body,signals)=>{
   const m=text.match(/weather(?:\s+(?:in|at|for))?[:]?\s+(?:the\s+)?(.+?)[?.!]*$/i);
   const wantsWeather=/\bweather\b|\bforecast\b|\btemperature\b/i.test(text);
   let place=null,loc=m?m[1].trim():"";
-  if(wantsWeather&&loc){try{place=await geocode(loc)}catch(e){}}
-  if(wantsWeather&&!place&&text.split(/\s+/).length<=6){try{place=await geocode(text)}catch(e){}}
+  let geoError=null;
+  if(wantsWeather&&loc){try{place=await geocode(loc)}catch(e){geoError=e}}
+  if(wantsWeather&&!place&&!geoError&&text.split(/\s+/).length<=6){try{place=await geocode(text)}catch(e){geoError=e}}
+  // Explicit weather ask that failed to resolve -> tell the user, never fall through silently
+  if(wantsWeather&&!place&&geoError){
+    signals.onResponse({text:"I could not find a place matching \u201C"+(loc||text)+"\u201D. Try a city name like \u201Cweather in Mumbai\u201D or \u201Cweather in New York\u201D."});
+    return;
+  }
   if(place){
     try{
       const [j,tb,tg,ti]=await Promise.all([
